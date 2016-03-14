@@ -100,10 +100,17 @@ class IeeespiderSpider(scrapy.Spider):
             article = response.meta['article']
 
             referencens = ''
-            for referencen in sel.xpath('//*[@id="abstractReferences"]/div/div/div/ol/li/text()').extract():
-                referencen = referencen.strip()
-                if('' != referencen):
-                    referencens = referencens + referencen + ' | '
+            for li in sel.xpath('//*[@id="abstractReferences"]/div/div/div/ol/li'):#获取所有的li标签（所有的参考文献，有可能含有 'Abstract | Full Text: PDF'字样）
+                referencen = ''
+                for data in li.xpath('./text() | ./i/text()').extract():#将其与子标签的内容连成一个字符串
+                    if '' != data.strip():
+                        referencen = referencen + data.strip().replace('\n',' ')
+                if '' != referencen:
+                    referencens = referencens + referencen + " | "
+            #for referencen in sel.xpath('//*[@id="abstractReferences"]/div/div/div/ol/li/text()').extract():
+            #    referencen = referencen.strip()
+            #    if('' != referencen):
+            #        referencens = referencens + referencen + ' | '
             article['referencens'] = referencens[0:-3]
 
             return article
