@@ -1,0 +1,7 @@
+#忽略gitignore文件
+#.gitignore
+#忽略json数据文件
+*.json
+#忽略pyc文件
+*.pyc
+
