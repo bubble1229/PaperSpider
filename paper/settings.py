@@ -64,9 +64,10 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
+ITEM_PIPELINES = {
 #    'paper.pipelines.SomePipeline': 300,
-#}
+	'paper.pipelines.MySQLStorePaperPipline':300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -88,6 +89,7 @@ DOWNLOADER_MIDDLEWARES = {
 #HTTPCACHE_STORAGE='scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 LOG_FILE = '/mydata/log/spider/paper.log'
+LOG_LEVEL = 'WARNING'
 
 USER_AGENTS = [
 	"Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0; en-US)",
