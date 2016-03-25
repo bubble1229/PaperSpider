@@ -6,6 +6,7 @@ from scrapy.spiders import Rule
 from scrapy.linkextractors.sgml import SgmlLinkExtractor
 from scrapy import Request
 import json
+import HTMLParser
 
 class IeeespiderSpider(scrapy.Spider):
     name = "IEEESpider"
@@ -14,19 +15,19 @@ class IeeespiderSpider(scrapy.Spider):
                 'http://ieeexplore.ieee.org/Xplore/home.jsp',
         ]
 
-    rules=[
-           #Rule(SgmlLinkExtractor(allow=(r'http://ieeexplore.ieee.org/search/searchresult.jsp?queryText=Data%20Mining&pageNumber=2&newsearch=true'))),
-           Rule(SgmlLinkExtractor(allow=(r'http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=\d+&queryText=Data%20Mining&pageNumber=\d+&newsearch=true')),callback="parse_item"),
-        ]
-
     global dataListUrl,articleDetailUrl,articleAbstractAuthorsUrl,articleKeywordsUrl,articleReferencesUrl
     global pageSize
+    global abstractNotExist, authorsNotExist, publishInNotExsit, keywordsNotExist
     dataListUrl = "http://ieeexplore.ieee.org/rest/search"
     articleDetailUrl = "http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber="
     articleAbstractAuthorsUrl = "http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber="
     articleKeywordsUrl = "http://ieeexplore.ieee.org/xpl/abstractKeywords.jsp?arnumber="
     articleReferencesUrl = "http://ieeexplore.ieee.org/xpl/abstractReferences.jsp?arnumber="
     pageSize = 25
+    abstractList = "Abstarct is not available"
+    authorsNotExist = 'Authors are not available'
+    publishInNotExsit = "Publication is not available"
+    keywordsNotExist = "Keywords are not available"
 
     def parse(self, response):
         request = Request(dataListUrl,callback = self.parseTotalRecods)
@@ -34,8 +35,6 @@ class IeeespiderSpider(scrapy.Spider):
         request.headers['Content-Type']="application/json;charset=UTF-8"#if not, it will return 425
         request = request.replace(**{'body':'{"queryText":"Data Mining","newsearch":"true"}'})#the param to transport
         yield request
-                #测试提取作者信息
-                #sel = Selector(response)
         
     def parseTotalRecods(self, response):
         request = Request(dataListUrl,callback = self.parse_ajax)
@@ -53,28 +52,62 @@ class IeeespiderSpider(scrapy.Spider):
                 
 
     def parse_ajax(self, response):
+        html_parser = HTMLParser.HTMLParser()
         data = response.body
         jData = json.loads(data)
         records = jData['records']
         for record in records:
+            article = PaperItem()
+            #systemId提取    
             articleNumber = record.get('articleNumber',-1)
-            yield Request(articleDetailUrl+articleNumber,callback = self.parseArticleDetail)
+            if(-1 != articleNumber):
+                article['systemId'] = articleNumber
+            # authors提取
+            authors = record.get('authors',-1)
+            if(-1 == authors):#有些文章中的作者，IEEE没有给出
+                article['authors'] = authorsNotExist
+            else:
+                authorsString = ''
+                for author in authors:
+                     authorsString = authorsString + html_parser.unescape(author.get ('preferredName')) + " | "#部分内容含有html的转义字符
+                article['authors'] = authorsString[0:-3]
+            #出版时间提取
+            publishTime = record.get('publicationYear',-1)
+            article['publishTime'] = publishTime
+            #提取发表的刊物
+            publishIn = record.get('publicationTitle',publishInNotExsit)
+            publishIn =  publishIn.replace('[::','')
+            publishIn =  publishIn.replace('::]','')
+            article['publishIn'] = html_parser.unescape(publishIn)
+            #出版刊物类型
+            article['publicationType'] = record.get('contentType',-1)
+
+            yield Request(articleDetailUrl+article['systemId'], meta = {'article': article}, callback = self.parseArticleDetail)
 
     def parseArticleDetail(self, response):
         sel = Selector(response)
-        article = PaperItem()
-        article['systemId'] = response.url.split('=')[-1]
+        article = response.meta['article']
+        #article['systemId'] = response.url.split('=')[-1]
         article['title'] = sel.xpath('//*[@id="article-page-hdr"]/div[1]/div[2]/h1/text()').extract()[0].strip()
-        article['abstract'] = sel.xpath('//*[@id="articleDetails"]/div/div[1]/p/text()[1]').extract()[0].strip()
-        article['publishIn'] = sel.xpath('//*[@id="articleDetails"]/div/div[2]/a/text()').extract()[0].strip() 
+        
+        abstractList = sel.xpath('//*[@id="articleDetails"]/div/div[1]/p/text()[1]').extract() 
+        if(0 == len(abstractList)):#有些文章的摘要是图片，无法获取摘要信息
+            article['abstract'] = abstractNotExist;
+        else:
+            article['abstract'] = abstractList[0].strip()
           
+        #article['publishIn'] = sel.xpath('//*[@id="articleDetails"]/div/div[2]/a/text()').extract()[0].strip() 
+        
+        """
         if (len(sel.xpath('//*[@id="articleDetails"]/div/div[2]/h3[2]')) != 0) :#代表是会议文章(会议日期获取如下)
             article['publishTime'] = sel.xpath('//*[@id="articleDetails"]/div/div[2]/text()').extract()[3].strip()
         else: # 非会议文章，该期刊出版日期获取如下：
             article['publishTime'] = sel.xpath('//*[@id="articleDetails"]/div/div[2]/div/dl[2]/dd[1]/text()').extract()[0].strip()
-           
-        yield Request(articleAbstractAuthorsUrl+article['systemId'],meta={'article': article}, callback=self.parseArticleAbstractAuthors)   
+        """
 
+        yield Request(articleAbstractAuthorsUrl+article['systemId'],meta={'article': article}, callback=self.parseArticleKeywords)   
+
+    """
     def parseArticleAbstractAuthors(self,response):
         sel = Selector(response)
         article = response.meta['article']
@@ -84,18 +117,21 @@ class IeeespiderSpider(scrapy.Spider):
             authors = authors + author.strip( )+ " | "
         article['authors'] = authors[0:-3]
         yield Request(articleKeywordsUrl + article['systemId'], meta = {'article': article},callback = self.parseArticleKeywords)
-
+    """
 
     def parseArticleKeywords(self, response):
         sel = Selector(response)
         article = response.meta['article']
 
         keywords = ''
-        for keyword in sel.xpath('//*[@id="abstractKeywords"]/div/div/div[1]/div[3]/ul/li/a/text()').extract():
-            keyword = keyword.strip()
-            if('' !=  keyword):
-                keywords = keywords + keyword + " | "
-        article['keywords'] = keywords[0:-3]
+        if(0 == len(sel.xpath('//*[@id="abstractKeywords"]/div/div/div[1]/div[3]/ul/li/a/text()'))):
+            article['keywords'] = keywordsNotExist;
+        else:
+            for keyword in sel.xpath('//*[@id="abstractKeywords"]/div/div/div[1]/div[3]/ul/li/a/text()').extract():
+                keyword = keyword.strip()
+                if('' !=  keyword):
+                    keywords = keywords + keyword + " | "
+            article['keywords'] = keywords[0:-3]
         yield Request(articleReferencesUrl + article['systemId'], meta = {'article': article}, callback = self.parseReferences)
 
 

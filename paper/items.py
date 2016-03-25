@@ -15,6 +15,7 @@ class PaperItem(scrapy.Item):
     title = Field();#标题
     publishTime = Field();#发表时间
     publishIn = Field();#发表期刊
+    publicationType = Field();#发表期刊的类型（会议、杂志等）
     abstract = Field();#摘要
     authors = Field();#作者
     keywords = Field()#关键词

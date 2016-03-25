@@ -1,6 +1,7 @@
 import random
 import base64
 import MySQLdb
+from proxies import PROXIES
 
 class RandomUserAgent(object):
     """Randomly rotate user agents based on a list of predefined ones"""
@@ -19,8 +20,8 @@ class RandomUserAgent(object):
 class ProxyMiddleware(object):
 	
 	def process_request(self, request, spider):
-		proxy = self.getIP()
-        #proxy = random.choice(PROXIES)
+		#proxy = self.getIP()
+                proxy = random.choice(PROXIES)
 		if proxy['user_pass'] is not None:
 			request.meta['proxy'] = "http://%s" % proxy['ip_port']
 			encoded_user_pass = base64.encodestring(proxy['user_pass'])
@@ -31,8 +32,8 @@ class ProxyMiddleware(object):
 		else:
 			print "**************ProxyMiddleware no pass************" + proxy['ip_port']
 			request.meta['proxy'] = "http://%s" % proxy['ip_port']
-		
-	def getIP(self):
+
+	def getIPFromDB(self):
 		coon = MySQLdb.connect(host = 'localhost', user = 'root', passwd = 'root', port = 3306, use_unicode = True, charset = 'utf8')
 		cur = coon.cursor()
 		coon.select_db('agent_ip')

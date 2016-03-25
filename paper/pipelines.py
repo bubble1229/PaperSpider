@@ -38,13 +38,13 @@ class MySQLStorePaperPipline(object):
         return item
 
     def _conditional_insert(self, tx, item, spider):
-        tx.execute("select * from paper_basic_info where id= %s",(item['systemId'],))
+        tx.execute("select * from paper_basic_info where systemId = %s",(item['systemId'],))
         result=tx.fetchone()
         if result:
             logging.info("Item already stored in db:%s" % item)
         else:
-            tx.execute("insert into paper_basic_info(systemId,title,publishTime,publishIn,abstract,source) values (%s,%s,%s,%s,%s,%s)",\
-                    (item['systemId'], item['title'], item['publishTime'], item['publishIn'], item['abstract'], 'IEEE'));
+            tx.execute("insert into paper_basic_info(systemId,title,publishTime,publishIn,publicationType,abstract,source) values (%s,%s,%s,%s,%s,%s,%s)",\
+                    (item['systemId'], item['title'], item['publishTime'], item['publishIn'], item['publicationType'], item['abstract'], 'IEEE'));
                         
             keywords = item['keywords'].split(' | ')
             for keyword in keywords:

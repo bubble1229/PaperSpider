@@ -4,4 +4,5 @@
 *.json
 #忽略pyc文件
 *.pyc
-
+#忽略代理IP文件
+proxies.py
