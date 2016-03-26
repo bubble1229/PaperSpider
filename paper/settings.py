@@ -88,8 +88,8 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES=[]
 #HTTPCACHE_STORAGE='scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-#LOG_FILE = '/mydata/log/spider/paper.log'
-#LOG_LEVEL = 'WARNING'
+LOG_FILE = '/mydata/log/spider/paper.log'
+LOG_LEVEL = 'WARNING'
 
 USER_AGENTS = [
 	"Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0; en-US)",

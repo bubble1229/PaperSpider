@@ -24,7 +24,7 @@ class IeeespiderSpider(scrapy.Spider):
     articleKeywordsUrl = "http://ieeexplore.ieee.org/xpl/abstractKeywords.jsp?arnumber="
     articleReferencesUrl = "http://ieeexplore.ieee.org/xpl/abstractReferences.jsp?arnumber="
     pageSize = 25
-    abstractList = "Abstarct is not available"
+    abstractNotExist = "Abstarct is not available"
     authorsNotExist = 'Authors are not available'
     publishInNotExsit = "Publication is not available"
     keywordsNotExist = "Keywords are not available"
