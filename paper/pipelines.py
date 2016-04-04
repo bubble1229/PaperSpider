@@ -60,7 +60,12 @@ class MySQLStorePaperPipline(object):
             for reference in references:
                 if('' != reference.strip()):
                     tx.execute("insert into paper_references(systemId, reference) values(%s,%s)",(item['systemId'], reference.strip()))
-                        
+            
+            indexes = item['indexes'].split(' | ')
+            for index in indexes:
+                if('' != index.strip()):
+                    tx.execute("insert into paper_indexes(systemId, indexing, type) value(%s, %s, %s)",(item['systemId'], index, "CONTROLLED INDEXING"))
+
             logging.info('Item already stored in db %s' %item)
                         
     def handle_error(self, e):

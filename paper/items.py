@@ -19,6 +19,7 @@ class PaperItem(scrapy.Item):
     abstract = Field();#摘要
     authors = Field();#作者
     keywords = Field()#关键词
+    indexes = Field();#索引标签
     references = Field();#参考文献
     source = Field();#来源，例如IEEE ACM等
 

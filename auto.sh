@@ -4,4 +4,4 @@ export PATH=$PATH:/usr/local/bin
 
 cd /mydata/workspace/python/paper
 
-scrapy crawl IEEESpider -o newData.json
+scrapy crawl IEEESpider -o IEEEData.json
