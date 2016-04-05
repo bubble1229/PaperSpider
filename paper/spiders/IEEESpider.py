@@ -35,7 +35,8 @@ class IeeespiderSpider(scrapy.Spider):
         request = Request(dataListUrl,callback = self.parseTotalRecods)
         request.method = "POST"#need post method, if not it will return code 405
         request.headers['Content-Type']="application/json;charset=UTF-8"#if not, it will return 425
-        request = request.replace(**{'body':'{"queryText":"(((\'Publication Title\':data mining) OR \'INSPEC Controlled Terms\':data mining) OR \'Author Keywords\':data mining)","matchBoolean":"true","searchField":"Search_All"}'})#the param to transport
+        request = request.replace(**{'body':'{"queryText":"(((\\"Document Title\\":data mining) OR \\"INSPEC Controlled Terms\\":data mining) OR \\"Author Keywords\\":data mining)","matchBoolean":"true","searchField":"Search_All"}'})#the param to transport
+        print request.body
         yield request
         
     def parseTotalRecods(self, response):
@@ -48,7 +49,7 @@ class IeeespiderSpider(scrapy.Spider):
         totalRecords = jData['totalRecords']
         pageNos = totalRecords / pageSize if totalRecords % pageSize == 0 else totalRecords / pageSize + 1
         for i in range(1, pageNos + 1):
-            bodyParam = '{"queryText":"(((\'Publication Title\':data mining) OR \'INSPEC Controlled Terms\':data mining) OR \'Author Keywords\':data mining)","matchBoolean":"true","searchField":"Search_All","pageNumber":"'+ bytes(i) +'"}'
+            bodyParam = '{"queryText":"(((\\"Document Title\\":data mining) OR \\"INSPEC Controlled Terms\\":data mining) OR \\"Author Keywords\\":data mining)","matchBoolean":"true","searchField":"Search_All","pageNumber":"'+ bytes(i) +'"}'
             request = request.replace(**{'body' : bodyParam})
             yield request 
                 
