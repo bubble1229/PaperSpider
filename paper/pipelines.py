@@ -41,10 +41,12 @@ class MySQLStorePaperPipline(object):
         tx.execute("select * from paper_basic_info where systemId = %s",(item['systemId'],))
         result=tx.fetchone()
         if result:
-            logging.info("Item already stored in db:%s" % item)
+            logging.warning("Item already stored in db:%s" % item)
+            tx.execute("insert into paper_basic_info(systemId,title,publishTime,publishIn,publicationType,abstract,searchKeywords) values (%s,%s,%s,%s,%s,%s,%s)",\
+                    (item['systemId'], item['title'], item['publishTime'], item['publishIn'], item['publicationType'], item['abstract'], item['searchKeywords']));
         else:
-            tx.execute("insert into paper_basic_info(systemId,title,publishTime,publishIn,publicationType,abstract,source) values (%s,%s,%s,%s,%s,%s,%s)",\
-                    (item['systemId'], item['title'], item['publishTime'], item['publishIn'], item['publicationType'], item['abstract'], 'IEEE'));
+            tx.execute("insert into paper_basic_info(systemId,title,publishTime,publishIn,publicationType,abstract,searchKeywords) values (%s,%s,%s,%s,%s,%s,%s)",\
+                    (item['systemId'], item['title'], item['publishTime'], item['publishIn'], item['publicationType'], item['abstract'], item['searchKeywords']));
                         
             keywords = item['keywords'].split(' | ')
             for keyword in keywords:

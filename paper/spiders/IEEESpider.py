@@ -19,6 +19,7 @@ class IeeespiderSpider(scrapy.Spider):
     global dataListUrl,articleDetailUrl,articleAbstractAuthorsUrl,articleKeywordsUrl,articleReferencesUrl
     global pageSize
     global abstractNotExist, authorsNotExist, publishInNotExsit, keywordsNotExist, indexesNotExist
+    global searchKeywords, jsonParams;
     dataListUrl = "http://ieeexplore.ieee.org/rest/search"
     articleDetailUrl = "http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber="
     articleAbstractAuthorsUrl = "http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber="
@@ -30,13 +31,14 @@ class IeeespiderSpider(scrapy.Spider):
     publishInNotExsit = "Publication is not available"
     keywordsNotExist = "Keywords are not available"
     indexesNotExist = "Indexing are not available"
-
+    searchKeywords = 'spiking'
+    jsonParams = '{"queryText":"(((\\"Document Title\\":' + searchKeywords + ') OR \\"INSPEC Controlled Terms\\":' + searchKeywords + ') OR \\"Author Keywords\\":'+ searchKeywords  +')","matchBoolean":"true","searchField":"Search_All"}'
+    
     def parse(self, response):
         request = Request(dataListUrl,callback = self.parseTotalRecods)
         request.method = "POST"#need post method, if not it will return code 405
         request.headers['Content-Type']="application/json;charset=UTF-8"#if not, it will return 425
-        request = request.replace(**{'body':'{"queryText":"(((\\"Document Title\\":data mining) OR \\"INSPEC Controlled Terms\\":data mining) OR \\"Author Keywords\\":data mining)","matchBoolean":"true","searchField":"Search_All"}'})#the param to transport
-        print request.body
+        request = request.replace(**{'body':jsonParams})#the param to transport
         yield request
         
     def parseTotalRecods(self, response):
@@ -48,8 +50,9 @@ class IeeespiderSpider(scrapy.Spider):
         jData = json.loads(data)
         totalRecords = jData['totalRecords']
         pageNos = totalRecords / pageSize if totalRecords % pageSize == 0 else totalRecords / pageSize + 1
+        print ("-----------------搜索关键词"+ searchKeywords +"，数据条数：" + bytes(totalRecords))
         for i in range(1, pageNos + 1):
-            bodyParam = '{"queryText":"(((\\"Document Title\\":data mining) OR \\"INSPEC Controlled Terms\\":data mining) OR \\"Author Keywords\\":data mining)","matchBoolean":"true","searchField":"Search_All","pageNumber":"'+ bytes(i) +'"}'
+            bodyParam = jsonParams[0: -1] + ',"pageNumber":"' + bytes(i) +'"}'
             request = request.replace(**{'body' : bodyParam})
             yield request 
                 
@@ -99,8 +102,6 @@ class IeeespiderSpider(scrapy.Spider):
         else:
             article['abstract'] = abstractList[0].strip()
           
-        #article['publishIn'] = sel.xpath('//*[@id="articleDetails"]/div/div[2]/a/text()').extract()[0].strip() 
-        
         yield Request(articleAbstractAuthorsUrl+article['systemId'],meta={'article': article}, callback=self.parseArticleKeywords)   
 
 
@@ -145,5 +146,7 @@ class IeeespiderSpider(scrapy.Spider):
             if '' != reference:
                 references = references + reference + " | "
         article['references'] = references[0:-3]
+        #搜索的关键字
+        article['searchKeywords'] = searchKeywords;
 
         return article
