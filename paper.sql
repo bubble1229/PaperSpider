@@ -1,7 +1,7 @@
 /*
 Navicat MySQL Data Transfer
 
-Source Server         : tecent-undefine
+Source Server         : ubuntu
 Source Server Version : 50628
 Source Host           : 115.159.38.166:3306
 Source Database       : paper
@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50628
 File Encoding         : 65001
 
-Date: 2016-04-04 16:49:49
+Date: 2016-04-17 20:47:50
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -38,7 +38,7 @@ CREATE TABLE `paper_basic_info` (
   `publishIn` varchar(255) NOT NULL,
   `publicationType` varchar(255) NOT NULL,
   `abstract` text NOT NULL,
-  `source` varchar(20) NOT NULL,
+  `searchKeywords` varchar(20) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
